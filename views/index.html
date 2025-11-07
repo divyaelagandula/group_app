@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered Registration Form</title>
+    <style>
+        /* * 1. Set body height to 100% of the viewport.
+         * 2. Use Flexbox to align content both horizontally (center) and vertically (center).
+         */
+       body{
+        height: 100vh;
+        display: flex ;
+        justify-content: center;
+        align-items: center;
+        background-color: lightgrey;
+        font-family: Arial, sans-serif;
+       }
+      label, input {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      form{
+        background-color: white;
+        padding: 20px;
+        width: 300px;
+      }
+    </style>
+</head>
+<body>
+    <form>
+        <h2 style="margin-top: 0; text-align: center; color: #333;">Registration</h2>
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+            <label for="phonenumber">Phone Number:</label>
+            <input type="tel" id="phonenumber" name="phonenumber">
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <input type="submit" value="Submit">
+        <a href="login.html">Existing-user</a>
+        <p id="message" style="color: red;"></p>
+    </form>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    const url=`http://${window.location.hostname}:3000`;
+    const form = document.querySelector('form');
+    function resetform(){
+        form.reset();
+    }
+    form.addEventListener('submit', async function(event) {
+        try{
+        event.preventDefault(); // Prevent the default form submission  
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const phoneNumber = document.getElementById('phonenumber').value;
+        const password = document.getElementById('password').value;
+        const obj={name,email,phoneNumber,password};
+        const response=await axios.post(`${url}/user/signup`,obj);
+        console.log(response.data);
+        document.getElementById('message').innerText="Registration Successful! Please login.";
+        resetform();
+        }
+        catch(error){
+            if(error.status==400){
+                document.getElementById('message').innerText="User already exists. Please login.";
+                return;
+            }
+            console.error('Error during registration:', error);
+        }
+       
+    });
+
+
+
+    </script>
+</html>

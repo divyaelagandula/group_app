@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+  <style>
+        /* * 1. Set body height to 100% of the viewport.
+         * 2. Use Flexbox to align content both horizontally (center) and vertically (center).
+         */
+       body{
+        height: 100vh;
+        display: flex ;
+        justify-content: center;
+        align-items: center;
+        background-color: lightgrey;
+        font-family: Arial, sans-serif;
+       }
+      label, input {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      form{
+        background-color: white;
+        padding: 20px;
+        width: 300px;
+      }
+    </style>
+<body>
+    <form>
+        <h2 style="margin-top: 0; text-align: center; color: #333;">Login</h2>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <input type="submit" value="Login">
+        <a href="index.html">New-user</a>
+        <p id="message" style="color: red;"></p>
+    </form>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>  
+    const url=`http://${window.location.hostname}:3000`;
+    
+    const form = document.querySelector('form');
+    function restform(){
+        form.reset();
+    }
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission  
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        axios.post(`${url}/user/login`, {
+            email: email,
+            password: password
+        })
+        .then(function (response) {
+            console.log('Login successful:', response.data);
+            document.getElementById('message').innerText="Login Successful!";
+            restform();
+            window.location.href="group.html";
+
+            // You can redirect the user or show a success message here
+        })
+        .catch(function (error) {
+            console.error('Error during login:', error.response.data.message);
+            document.getElementById('message').innerText=error.response.data.message;
+
+            // You can show an error message to the user here
+        });
+    });
+</script>
+</html>

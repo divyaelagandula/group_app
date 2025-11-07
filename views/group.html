@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Style Chat</title>
+    <style>
+        /* General Setup */
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ECE5DD; /* WhatsApp background */
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            overflow: hidden; /* Hide body overflow */
+        }
+        
+        /* Main Chat Container */
+        #main {
+            /* Flexbox Column Layout */
+            display: flex; 
+            flex-direction: column;
+            
+            background-color: white;
+            height: 95vh; /* Take up most of the screen */
+            max-height: 800px;
+            width: 100%;
+            max-width: 600px; /* Limit the chat width */
+            position: relative; /* Anchor for absolute elements */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden; /* Keep children contained */
+        }
+
+        /* 1. Header (Fixed to Top) */
+        header {
+            background-color: #075E54; /* WhatsApp green */
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 50px;
+            flex-shrink: 0; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        header p {
+            font-size: 0.8rem;
+            margin: 0;
+            opacity: 0.8;
+        }
+
+        /* 2. Main Content Area (Scrollable) */
+        main {
+            /* Takes up all available space */
+            flex-grow: 1; 
+            overflow-y: auto; /* IMPORTANT: Makes this section scrollable */
+            padding: 15px;
+            background-size: cover;
+            display: flex; /* Added flex to align messages */
+            flex-direction: column;
+        }
+        
+       
+
+        /* 3. Footer/Input Area (Fixed to Bottom) */
+        .chat-input-area {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background-color: #F0F0F0;
+            flex-shrink: 0; 
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        .message-input {
+            flex-grow: 1; 
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+            font-size: 1rem;
+            line-height: 1.2;
+        }
+        
+        .send-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px; 
+            color: #075E54; 
+            padding: 8px;
+            line-height: 1; 
+            transition: color 0.2s, transform 0.1s;
+            border-radius: 50%;
+        }
+        .send-button:hover {
+            color: #128C7E;
+            transform: scale(1.05);
+        }
+        .send-button:active {
+             transform: scale(0.95);
+        }
+
+    </style>
+</head>
+<body>
+    <div id="main">
+        <header>
+            <h1>Divya</h1>  
+            <p>online</p>
+        </header>
+        
+        <main>
+       
+            
+        </main>
+        
+        <footer class="chat-input-area">
+             <input type="text" placeholder="Type a message..." class="message-input">
+            <button class="send-button">&#10148;</button>
+        </footer>
+    </div>
+</body>
+</html>
