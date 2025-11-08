@@ -64,6 +64,7 @@
         .then(function (response) {
             console.log('Login successful:', response.data);
             document.getElementById('message').innerText="Login Successful!";
+            localStorage.setItem('token',response.data.token);
             restform();
             window.location.href="group.html";
 

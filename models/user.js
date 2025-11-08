@@ -1,7 +1,7 @@
 const {DataTypes,sequelize}=require('sequelize');
 const db=require('../utils/dbconncetion');
 const { sign } = require('crypto');
-const signup=db.define('Signup',{
+const signup=db.define('user',{
     id:{
         type:DataTypes.INTEGER,
         autoIncrement:true,
