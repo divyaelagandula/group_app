@@ -11,6 +11,7 @@ const verify=async (req,res,next)=>{
         next();     
     }
     catch(err){
+        console.log(err);
         res.status(500).json({message:'Authentication failed',error:err.message});
     }
     
