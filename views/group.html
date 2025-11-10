@@ -138,13 +138,13 @@
         </footer>
     </div>
 </body>
-
+<script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const token = localStorage.getItem('token');
     const url = `http://${window.location.hostname}:3000`;
     // Initialize WebSocket connection
-    const socket = new WebSocket(`ws://${window.location.hostname}:3000`);
+    const socket = io(`ws://${window.location.hostname}:3000`);
 
     if (!token) {
         window.location.href = "login.html";
@@ -195,12 +195,14 @@
         .then(function (response) {
             console.log('Message sent successfully. Broadcast handled by server.');
             //after successfully stoting msg in db..we sending that meg to all the clients of 
-            // localhost:3000  via websocket
+            // localhost:3000  via socket.io
             messageInput.value = ''; // Clear input field
+            currentUserId=response.data.data.userId; //update current user id
             const dataString = JSON.stringify(response.data.data);
             console.log(dataString);
-            socket.send(dataString); // Notify server via WebSocket..it will broadcast to all clients
-             //it is handled in app.js --- ws.on('message', (message) => {
+            socket.emit('message', dataString);
+            // Notify server via WebSocket..it will broadcast to all clients
+             //it is handled in app.js --- io.on('message', (message) => {
         })
         .catch(function (error) {
             console.error('Error sending message via HTTP:', error);
@@ -208,21 +210,11 @@
     });
 
     // --- 3. WebSocket Listener (Called by Server Broadcast) ---
-    socket.onmessage = async function(event) {
+    socket.on('message', async function(message) {
         try {
-            // Server now sends a JSON string with sender details
-        // 📢 FIX: Use the .text() method on the data to ensure you get a valid string
-        let messageString = event.data;
-        if (event.data instanceof Blob) {
-             // If the data is a Blob (common in browsers), read it as text
-             messageString = await event.data.text(); 
-        } 
-        // else if (event.data instanceof ArrayBuffer) {
-        //      // Handle ArrayBuffer if necessary (less common for simple text)
-        //      messageString = new TextDecoder().decode(event.data);
-        // }
+        
 
-        const messageData = JSON.parse(messageString);
+        const messageData = JSON.parse(message);
             console.log('Message received from server via WebSocket:', messageData);
 
             // Render the live message using the shared function
@@ -231,7 +223,7 @@
         } catch(e) {
             console.error('Error parsing WebSocket message:', e);
         }
-    }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         getmessges(); // Load history on page load
