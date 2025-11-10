@@ -10,7 +10,7 @@ const signup=async (req,res)=>{
         res.status(201).json({message:'User registered successfully',data:response});
     }
     catch(err){
-        console.log(err.name);
+        console.log(err);
         if(err.name==='SequelizeUniqueConstraintError'){
             return res.status(400).json({message:'Email already exists'});
         }

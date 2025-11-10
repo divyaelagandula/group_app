@@ -11,39 +11,31 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #ECE5DD; /* WhatsApp background */
+            background-color: #ECE5DD;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
-            overflow: hidden; /* Hide body overflow */
+            overflow: hidden;
         }
         
         /* Main Chat Container */
         #main {
-            /* Flexbox Column Layout */
             display: flex; 
             flex-direction: column;
-            
             background-color: white;
-            height: 95vh; /* Take up most of the screen */
+            height: 95vh;
             max-height: 800px;
             width: 100%;
-            max-width: 600px; /* Limit the chat width */
-            position: relative; /* Anchor for absolute elements */
+            max-width: 600px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             border-radius: 8px;
-            overflow: hidden; /* Keep children contained */
+            overflow: hidden;
         }
 
         /* 1. Header (Fixed to Top) */
         header {
-            background-color: #075E54; /* WhatsApp green */
+            background-color: #075E54;
             color: white;
             padding: 15px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 50px;
             flex-shrink: 0; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             z-index: 10;
@@ -61,12 +53,10 @@
 
         /* 2. Main Content Area (Scrollable) */
         main {
-            /* Takes up all available space */
             flex-grow: 1; 
-            overflow-y: auto; /* IMPORTANT: Makes this section scrollable */
+            overflow-y: auto;
             padding: 15px;
-            background-size: cover;
-            display: flex; /* Added flex to align messages */
+            display: flex;
             flex-direction: column;
         }
         main .message {
@@ -74,15 +64,21 @@
             margin-bottom: 10px;
             padding: 10px 15px;
             border-radius: 20px;
-            background-color: lightgreen;
-            align-self: flex-end; /* Align messages to the left */
             font-size: 1rem;
             line-height: 1.2;
             position: relative;
-        
         }
         
-       
+        /* 📢 NEW: Styling for self vs other messages */
+        main .self-message {
+            background-color: #DCF8C6; /* Light green/WhatsApp 'Sent' color */
+            align-self: flex-end; /* Align to the right */
+        }
+        main .other-message {
+            background-color: #FFFFFF; /* White/WhatsApp 'Received' color */
+            align-self: flex-start; /* Align to the left */
+            border: 1px solid black;
+        }
 
         /* 3. Footer/Input Area (Fixed to Bottom) */
         .chat-input-area {
@@ -134,8 +130,7 @@
         </header>
         
         <main>
-            
-        </main>
+            </main>
         
         <footer class="chat-input-area">
              <input type="text" placeholder="Type a message..." class="message-input">
@@ -146,52 +141,101 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-    const token=localStorage.getItem('token');
-    console.log("Token in group page:", token);
-    const url=`http://${window.location.hostname}:3000`;
-    if(!token){
-        window.location.href="login.html";
+    const token = localStorage.getItem('token');
+    const url = `http://${window.location.hostname}:3000`;
+    // Initialize WebSocket connection
+    const socket = new WebSocket(`ws://${window.location.hostname}:3000`);
+
+    if (!token) {
+        window.location.href = "login.html";
     }
-    document.addEventListener('DOMContentLoaded', ()=>{
-        getmessges();
-    })
+    
     const messageInput = document.querySelector('.message-input');
     const sendButton = document.querySelector('.send-button');
     const mainContent = document.querySelector('main');
-    sendButton.addEventListener('click', function() {
-        const message = messageInput.value.trim();
-        if (message === '') return; // Do nothing for empty messages
-        // Send to server
-        axios.post(`${url}/group/message`, {message: message}, {headers: {'authorization':token}})
-        .then(function (response) {
-            console.log('Message sent to server:', response.data);
-            getmessges();
-            messageInput.value = ''; // Clear input field
-        })
-        .catch(function (error) {
-            console.error('Error sending message to server:', error);
-        });
-    });
-    async function getmessges(){
-        try{
-            const response=await axios.get(`${url}/group/getmessages`,{headers: {'authorization':token}});
-            console.log('Messages fetched from server:', response.data.data);
-            const messages=response.data.data;
-            const mainContent = document.querySelector('main');
-            mainContent.innerHTML=''; // Clear existing messages
-            messages.forEach(msg=>{
-                const messageDiv = document.createElement('div');
-                messageDiv.className='message';
-                messageDiv.innerText=msg.message;
-                mainContent.appendChild(messageDiv);
-            });
-
-
+    
+    let currentUserId = null; // Will be set after fetching history
+    function renderMessage(msg) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message';
+        messageDiv.innerText = `${msg.userName}: ${msg.message}`;
+        
+        if (msg.userId === currentUserId) {
+            messageDiv.classList.add('self-message');
+        } else {
+            messageDiv.classList.add('other-message');
         }
-        catch(error){
+        
+        mainContent.appendChild(messageDiv);
+        mainContent.scrollTop = mainContent.scrollHeight; // Auto-scroll to bottom
+    }
+
+
+    // --- 1. HTTP GET for History (Called on Load) ---
+    async function getmessges() {
+        try {
+            const response = await axios.get(`${url}/group/getmessages`, { headers: { 'authorization': token } });
+            
+            const { messages, currentUserId: serverUserId } = response.data.data;
+            currentUserId = serverUserId;
+
+            mainContent.innerHTML = ''; // Clear existing messages
+            messages.forEach(msg => renderMessage(msg));
+
+        } catch (error) {
             console.error('Error fetching messages:', error);
         }
-
     }
+
+    // --- 2. HTTP POST for Sending (Called on Click) ---
+    sendButton.addEventListener('click', function() {
+        const message = messageInput.value.trim();
+        if (message === '') return;
+        axios.post(`${url}/group/message`, { message: message }, { headers: { 'authorization': token } })
+        .then(function (response) {
+            console.log('Message sent successfully. Broadcast handled by server.');
+            //after successfully stoting msg in db..we sending that meg to all the clients of 
+            // localhost:3000  via websocket
+            messageInput.value = ''; // Clear input field
+            const dataString = JSON.stringify(response.data.data);
+            console.log(dataString);
+            socket.send(dataString); // Notify server via WebSocket..it will broadcast to all clients
+             //it is handled in app.js --- ws.on('message', (message) => {
+        })
+        .catch(function (error) {
+            console.error('Error sending message via HTTP:', error);
+        });
+    });
+
+    // --- 3. WebSocket Listener (Called by Server Broadcast) ---
+    socket.onmessage = async function(event) {
+        try {
+            // Server now sends a JSON string with sender details
+        // 📢 FIX: Use the .text() method on the data to ensure you get a valid string
+        let messageString = event.data;
+        if (event.data instanceof Blob) {
+             // If the data is a Blob (common in browsers), read it as text
+             messageString = await event.data.text(); 
+        } 
+        // else if (event.data instanceof ArrayBuffer) {
+        //      // Handle ArrayBuffer if necessary (less common for simple text)
+        //      messageString = new TextDecoder().decode(event.data);
+        // }
+
+        const messageData = JSON.parse(messageString);
+            console.log('Message received from server via WebSocket:', messageData);
+
+            // Render the live message using the shared function
+            renderMessage(messageData); 
+            
+        } catch(e) {
+            console.error('Error parsing WebSocket message:', e);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        getmessges(); // Load history on page load
+    });
+
 </script>
 </html>
