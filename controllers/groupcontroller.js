@@ -16,22 +16,10 @@ const message = async (req, res) => {
         // 1. Save to database
         const newMessage = await groupModel.create({ message: message, userId: userId });
         
-        // 2. Fetch the sender's name for broadcasting
-        const sender = await User.findByPk(userId, { attributes: ['name'] });
-
-        // 3. Create the complete message object for broadcast
-        const broadcastData = {
-            id: newMessage.id,
-            message: newMessage.message,
-            userId: userId,
-            userName: sender ? sender.name : 'Unknown'
-        };
-
-        // We will broadcast this from the main server file, after this function is called.
-
+        
         res.status(201).json({ 
             message: 'Message sent successfully', 
-            data: broadcastData 
+            data: newMessage
         });
     } catch (err) {
         console.error('Error sending message:', err);
@@ -52,11 +40,9 @@ const getmessages = async (req, res) => {
         console.log(responses);
 
         const messagesWithNames = responses.map(msg => ({
-            id: msg.id,
             message: msg.message,
             userId: msg.userId,
-            userName: msg.user ? msg.user.name : 'Unknown',
-            createdAt: msg.createdAt
+            username: msg.user ? msg.user.name : 'Unknown',
         }));
 
         res.status(200).json({

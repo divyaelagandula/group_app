@@ -2,7 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const http = require('http');
+const jwt = require('jsonwebtoken');
 const {Server} = require('socket.io');
+const dotenv = require('dotenv');
+dotenv.config();
+const User=require('./models/user');
 const db = require('./utils/dbconncetion');
 const indexModels = require('./models/index');
 
@@ -26,12 +30,38 @@ app.get('/', (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server);
 
+io.use(async (socket, next) => {
+    try{
+            const token = socket.handshake.auth.token;
+            if(!token){
+                return next(new Error('Authentication error'));
+            }
+            const decode=jwt.verify(token,"kavyadivya");
+            if(!decode){
+                return next(new Error('invalide token or expired'));
+            }
+            const user=await User.findByPk(decode.id);
+            if(!user){
+                return next(new Error('user not found'));
+            }
+            console.log('sender user info to socket:',user);
+            socket.user=user;
+            next();
+    }
 
+    // Here you would normally verify the token and extract user info
+    catch(err){
+        console.error('Socket authentication error:', err);
+        next(new Error('internal server error'));
+    }
+});
 io.on('connection', (socket) => {
     console.log('New client connected', socket.id);
 
-    socket.on('message', (message) => {
-        io.emit('message', message); // Broadcast to all connected clients
+    socket.on('chat-message', (message) => {
+        console.log('recived from user:', socket.user.name, 'message:', message);
+
+        io.emit('chat-message', {username:socket.user.name,message:message,userId:socket.user.id}); // Broadcast to all connected clients
            });
 });
 

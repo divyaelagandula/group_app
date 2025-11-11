@@ -144,7 +144,11 @@
     const token = localStorage.getItem('token');
     const url = `http://${window.location.hostname}:3000`;
     // Initialize WebSocket connection
-    const socket = io(`ws://${window.location.hostname}:3000`);
+    const socket = io(`ws://${window.location.hostname}:3000`, {
+        auth: {
+            token: localStorage.getItem('token')
+        }
+    });
 
     if (!token) {
         window.location.href = "login.html";
@@ -155,12 +159,13 @@
     const mainContent = document.querySelector('main');
     
     let currentUserId = null; // Will be set after fetching history
-    function renderMessage(msg) {
+    function renderMessage(data) {
+        console.log('Rendering message:', data);
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message';
-        messageDiv.innerText = `${msg.userName}: ${msg.message}`;
+        messageDiv.innerText = `${data.username}: ${data.message}`;
         
-        if (msg.userId === currentUserId) {
+        if (data.userId === currentUserId) {
             messageDiv.classList.add('self-message');
         } else {
             messageDiv.classList.add('other-message');
@@ -198,10 +203,8 @@
             // localhost:3000  via socket.io
             messageInput.value = ''; // Clear input field
             currentUserId=response.data.data.userId; //update current user id
-            const dataString = JSON.stringify(response.data.data);
-            console.log(dataString);
-            socket.emit('message', dataString);
-            // Notify server via WebSocket..it will broadcast to all clients
+            socket.emit('chat-message', message);
+            // Notify server via socket.io..it will broadcast to all clients
              //it is handled in app.js --- io.on('message', (message) => {
         })
         .catch(function (error) {
@@ -210,15 +213,12 @@
     });
 
     // --- 3. WebSocket Listener (Called by Server Broadcast) ---
-    socket.on('message', async function(message) {
+    socket.on('chat-message', async function(object) {
         try {
-        
-
-        const messageData = JSON.parse(message);
-            console.log('Message received from server via WebSocket:', messageData);
+            console.log('Message received from server via WebSocket:', object);
 
             // Render the live message using the shared function
-            renderMessage(messageData); 
+            renderMessage(object); 
             
         } catch(e) {
             console.error('Error parsing WebSocket message:', e);
