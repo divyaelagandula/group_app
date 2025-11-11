@@ -3,12 +3,12 @@ const cors = require('cors');
 const path = require('path');
 const http = require('http');
 const jwt = require('jsonwebtoken');
-const {Server} = require('socket.io');
 const dotenv = require('dotenv');
 dotenv.config();
 const User=require('./models/user');
 const db = require('./utils/dbconncetion');
 const indexModels = require('./models/index');
+const socketIo=require('./socket_io/socket')
 
 // Import your router/controller functions
 const groupController = require('./routes/group'); // Assuming this handles the /group routes
@@ -28,42 +28,15 @@ app.get('/', (req, res) => {
 });
 
 const server = http.createServer(app);
-const io = new Server(server);
+// This is a snippet of code, likely from a Node.js application using the Socket.IO library,
+//  for initializing a Socket.IO server.
+// The CORS configuration (specifically the origin setting) dictates which client 
+// domains (origins) are allowed to connect to your Socket.IO server.
 
-io.use(async (socket, next) => {
-    try{
-            const token = socket.handshake.auth.token;
-            if(!token){
-                return next(new Error('Authentication error'));
-            }
-            const decode=jwt.verify(token,"kavyadivya");
-            if(!decode){
-                return next(new Error('invalide token or expired'));
-            }
-            const user=await User.findByPk(decode.id);
-            if(!user){
-                return next(new Error('user not found'));
-            }
-            console.log('sender user info to socket:',user);
-            socket.user=user;
-            next();
-    }
 
-    // Here you would normally verify the token and extract user info
-    catch(err){
-        console.error('Socket authentication error:', err);
-        next(new Error('internal server error'));
-    }
-});
-io.on('connection', (socket) => {
-    console.log('New client connected', socket.id);
+socketIo(server);
 
-    socket.on('chat-message', (message) => {
-        console.log('recived from user:', socket.user.name, 'message:', message);
 
-        io.emit('chat-message', {username:socket.user.name,message:message,userId:socket.user.id}); // Broadcast to all connected clients
-           });
-});
 
 db.sync()
     .then(() => {
