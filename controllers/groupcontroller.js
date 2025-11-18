@@ -1,3 +1,4 @@
+const { where } = require('sequelize');
 const groupModel = require('../models/group');
 const User = require('../models/user');
 // Assuming the WebSocket server instance is passed or accessible
@@ -10,11 +11,11 @@ const User = require('../models/user');
 
 const message = async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message,roomName } = req.body;
         const userId = req.user.id;
 
         // 1. Save to database
-        const newMessage = await groupModel.create({ message: message, userId: userId });
+        const newMessage = await groupModel.create({ message: message,roomName:roomName, userId: userId });
         
         
         res.status(201).json({ 
@@ -29,15 +30,18 @@ const message = async (req, res) => {
 
 const getmessages = async (req, res) => {
     try {
+        const id = req.user.id;
+        const roomName=req.params.roomName
         // Fetch all messages and include the associated User's name for history loading
         const responses = await groupModel.findAll({
+            where:{roomName:roomName},
             order: [['createdAt', 'ASC']],
             include: [{
                 model: User,
                 attributes: ['name']
             }]
         });
-        console.log(responses);
+        console.log("getiinggggggg",responses);
 
         const messagesWithNames = responses.map(msg => ({
             message: msg.message,
@@ -58,7 +62,22 @@ const getmessages = async (req, res) => {
     }
 }
 
+const checkingEmailExistsOrNot=async (req,res)=>{
+    try{
+        const {email}=req.body
+        const result=User.findOne({where:{email:email}})
+        if(!result){
+            res.status(404).json({succses:false,message:'user not found'})
+        }
+        res.status(200).json({succses:true,message:'user found'})
+
+    }catch(err){
+        res.status(500).json({succses:false,message:err.message})
+    }
+
+}
 module.exports = {
     message,
-    getmessages
+    getmessages,
+    checkingEmailExistsOrNot
 };

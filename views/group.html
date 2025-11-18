@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,27 +9,107 @@
         /* General Setup */
         body {
             height: 100vh;
+            /* Use flexbox to arrange children (email input and #main) in a row */
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: row;
+            /* Arranges children horizontally */
+            justify-content: flex-start;
+            /* Aligns them to the start */
+            align-items: stretch;
+            /* Makes them stretch to fill the 100vh height */
             background-color: #ECE5DD;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             overflow: hidden;
+            /* Keep this to prevent scrollbars */
         }
-        
+
+        #email {
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            width: 15%;
+            max-width: 250px;
+            margin-right: 10px;
+            font-size: 1rem;
+            line-height: 1.2;
+            background-color: white;
+            height: 40px;
+            align-self: flex-start;
+            margin-top: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar Styles */
+        #sidebar {
+            width: 20%;
+            max-width: 250px;
+            margin-right: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #F8F8F8;
+            /* Light background for the list */
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            overflow-y: auto;
+            /* Make the room list scrollable */
+            align-self: flex-start;
+            height: calc(100vh - 20px);
+            /* 100vh minus top/bottom margins */
+            flex-shrink: 0;
+        }
+
+        #sidebar h2 {
+            color: #075E54;
+            font-size: 1.1rem;
+            margin-top: 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #075E54;
+        }
+
+        #room-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #room-list li {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        #room-list li:hover {
+            background-color: #E6E6E6;
+        }
+
+        #room-list li.active-room {
+            background-color: #DCF8C6;
+            /* WhatsApp send color */
+            font-weight: bold;
+            color: #075E54;
+            border: 1px solid #075E54;
+        }
+
         /* Main Chat Container */
         #main {
-            display: flex; 
+            display: flex;
             flex-direction: column;
             background-color: white;
-            height: 95vh;
-            max-height: 800px;
-            width: 100%;
-            max-width: 600px;
+            height: calc(100vh - 20px);
+            /* Adjusted height to fit within body */
+            width: 78%;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             overflow: hidden;
+            align-self: flex-start;
+            margin-top: 10px;
+            flex-grow: 1;
+            /* Allows it to take up remaining space */
         }
 
         /* 1. Header (Fixed to Top) */
@@ -36,15 +117,17 @@
             background-color: #075E54;
             color: white;
             padding: 15px 20px;
-            flex-shrink: 0; 
+            flex-shrink: 0;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             z-index: 10;
         }
+
         header h1 {
             font-size: 1.2rem;
             margin: 0;
             font-weight: 600;
         }
+
         header p {
             font-size: 0.8rem;
             margin: 0;
@@ -53,12 +136,13 @@
 
         /* 2. Main Content Area (Scrollable) */
         main {
-            flex-grow: 1; 
+            flex-grow: 1;
             overflow-y: auto;
             padding: 15px;
             display: flex;
             flex-direction: column;
         }
+
         main .message {
             max-width: 70%;
             margin-bottom: 10px;
@@ -68,15 +152,20 @@
             line-height: 1.2;
             position: relative;
         }
-        
-        /* 📢 NEW: Styling for self vs other messages */
+
+        /* Styling for self vs other messages */
         main .self-message {
-            background-color: #DCF8C6; /* Light green/WhatsApp 'Sent' color */
-            align-self: flex-end; /* Align to the right */
+            background-color: #DCF8C6;
+            /* Light green/WhatsApp 'Sent' color */
+            align-self: flex-end;
+            /* Align to the right */
         }
+
         main .other-message {
-            background-color: #FFFFFF; /* White/WhatsApp 'Received' color */
-            align-self: flex-start; /* Align to the left */
+            background-color: #FFFFFF;
+            /* White/WhatsApp 'Received' color */
+            align-self: flex-start;
+            /* Align to the left */
             border: 1px solid black;
         }
 
@@ -86,13 +175,13 @@
             align-items: center;
             padding: 8px 10px;
             background-color: #F0F0F0;
-            flex-shrink: 0; 
+            flex-shrink: 0;
             box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
             z-index: 10;
         }
-        
+
         .message-input {
-            flex-grow: 1; 
+            flex-grow: 1;
             padding: 10px 15px;
             border-radius: 20px;
             border: 1px solid #ccc;
@@ -100,40 +189,48 @@
             font-size: 1rem;
             line-height: 1.2;
         }
-        
+
         .send-button {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 20px; 
-            color: #075E54; 
+            font-size: 20px;
+            color: #075E54;
             padding: 8px;
-            line-height: 1; 
+            line-height: 1;
             transition: color 0.2s, transform 0.1s;
             border-radius: 50%;
         }
+
         .send-button:hover {
             color: #128C7E;
             transform: scale(1.05);
         }
-        .send-button:active {
-             transform: scale(0.95);
-        }
 
+        .send-button:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
+
 <body>
+    <input type="email" id="email" placeholder="enter email for personal chat">
+    <div id="sidebar">
+        <h2>Rooms</h2>
+        <ul id="room-list">
+        </ul>
+    </div>
     <div id="main">
         <header>
-            <h1>Divya</h1>  
+            <h1>Divya</h1>
             <p>online</p>
         </header>
-        
+
         <main>
-            </main>
-        
+        </main>
+
         <footer class="chat-input-area">
-             <input type="text" placeholder="Type a message..." class="message-input">
+            <input type="text" placeholder="Type a message..." class="message-input">
             <button class="send-button">&#10148;</button>
         </footer>
     </div>
@@ -141,8 +238,18 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
+    // --- Global Setup ---
     const token = localStorage.getItem('token');
     const url = `http://${window.location.hostname}:3000`;
+    
+    // 🔑 User Identifier (Key for Namespaced LocalStorage)
+    const userIdentifier = localStorage.getItem('phonenumber'); 
+
+    // Redirect if not logged in
+    if (!token) {
+        window.location.href = "login.html";
+    }
+
     // Initialize WebSocket connection
     const socket = io(`ws://${window.location.hostname}:3000`, {
         auth: {
@@ -150,84 +257,247 @@
         }
     });
 
-    if (!token) {
-        window.location.href = "login.html";
-    }
-    
+    // --- State Variables ---
+    let currentUserId = null;
+    let currentChatType = null; // 'personal' or 'group'
+    let currentRoomName = '';
+    let joinedRooms = []; // Array to keep track of all joined rooms
+
+    // --- DOM Elements ---
     const messageInput = document.querySelector('.message-input');
     const sendButton = document.querySelector('.send-button');
     const mainContent = document.querySelector('main');
-    
-    let currentUserId = null; // Will be set after fetching history
+    const roomList = document.getElementById('room-list');
+    const emailInput = document.getElementById('email');
+
+
+    // --- LocalStorage Persistence Functions (Corrected Scoping) ---
+    function getRoomsStorageKey() {
+        if (!userIdentifier) {
+            console.error("Cannot access storage key: UserIdentifier is missing.");
+            return null;
+        }
+        return `joinedRooms_${userIdentifier}`;
+    }
+
+    function saveToLocalStorage() {
+        const key = getRoomsStorageKey();
+        if (key) {
+            localStorage.setItem(key, JSON.stringify(joinedRooms));
+        }
+    }
+
+    function loadRoomsFromLocalStorage() {
+        const key = getRoomsStorageKey();
+        if (!key) {
+            joinedRooms = [];
+            return;
+        }
+
+        const savedRooms = localStorage.getItem(key);
+        console.log('savedRooms', savedRooms);
+
+        if (savedRooms) {
+            joinedRooms = JSON.parse(savedRooms);
+        } else {
+            joinedRooms = [];
+        }
+    }
+    // --- End LocalStorage Functions ---
+
+
+    // --- UI/Chat Management Functions ---
+
+    function renderRoomList() {
+        roomList.innerHTML = ''; // Clear the current list
+        joinedRooms.forEach(roomName => {
+            const listItem = document.createElement('li');
+            listItem.textContent = roomName;
+            listItem.setAttribute('data-room', roomName); // Added data attribute for robustness
+
+            // Highlight the currently active room
+            if (roomName === currentRoomName) {
+                listItem.classList.add('active-room');
+            }
+
+            // Allow clicking on a room to switch the chat context
+            listItem.addEventListener('click', async () => {
+                if (roomName !== currentRoomName) {
+                    await switchRoom(roomName);
+                }
+            });
+
+            roomList.appendChild(listItem);
+        });
+    }
+
+    async function switchRoom(newRoomName) {
+        // 1. Remove active class from previous room
+        const oldActive = document.querySelector('.active-room');
+        if (oldActive) {
+            oldActive.classList.remove('active-room');
+        }
+
+        currentRoomName = newRoomName;
+
+        // 2. Join the room on the server
+        socket.emit('join-room', currentRoomName);
+
+        // 3. Load the new room's history
+        await getmessges();
+
+        // 4. Update Header 
+        document.querySelector('header h1').textContent = `Chat: ${currentRoomName}`;
+        document.querySelector('header p').textContent = `Now Viewing`;
+
+        // 5. Update Active Status (Manually update if renderRoomList is not called)
+        const newActive = document.querySelector(`#room-list li[data-room="${currentRoomName}"]`);
+        if (newActive) {
+            newActive.classList.add('active-room');
+        }
+    }
+
     function renderMessage(data) {
-        console.log('Rendering message:', data);
+        if (data.currentRoomName && data.currentRoomName !== currentRoomName) {
+            // Ignore messages not meant for the currently viewed room
+            return;
+        }
+        
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message';
         messageDiv.innerText = `${data.username}: ${data.message}`;
-        
+
         if (data.userId === currentUserId) {
             messageDiv.classList.add('self-message');
         } else {
             messageDiv.classList.add('other-message');
         }
-        
         mainContent.appendChild(messageDiv);
         mainContent.scrollTop = mainContent.scrollHeight; // Auto-scroll to bottom
     }
 
-
-    // --- 1. HTTP GET for History (Called on Load) ---
+    // --- 1. HTTP GET for History ---
     async function getmessges() {
+        if (!currentRoomName) {
+            mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: gray;">Start a new chat or select a room from the left.</div>';
+            return;
+        }
         try {
-            const response = await axios.get(`${url}/group/getmessages`, { headers: { 'authorization': token } });
-            
+            const response = await axios.get(`${url}/group/getmessages/${currentRoomName}`, { headers: { 'authorization': token } });
             const { messages, currentUserId: serverUserId } = response.data.data;
             currentUserId = serverUserId;
-
             mainContent.innerHTML = ''; // Clear existing messages
             messages.forEach(msg => renderMessage(msg));
-
         } catch (error) {
             console.error('Error fetching messages:', error);
+            mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Error loading messages.</div>';
         }
     }
 
-    // --- 2. HTTP POST for Sending (Called on Click) ---
-    sendButton.addEventListener('click', function() {
+    // --- 2. HTTP POST for Sending ---
+    sendButton.addEventListener('click', function () {
         const message = messageInput.value.trim();
-        if (message === '') return;
-        axios.post(`${url}/group/message`, { message: message }, { headers: { 'authorization': token } })
-        .then(function (response) {
-            console.log('Message sent successfully. Broadcast handled by server.');
-            //after successfully stoting msg in db..we sending that meg to all the clients of 
-            // localhost:3000  via socket.io
-            messageInput.value = ''; // Clear input field
-            currentUserId=response.data.data.userId; //update current user id
-            socket.emit('chat-message', message);
-            // Notify server via socket.io..it will broadcast to all clients
-             //it is handled in app.js --- io.on('message', (message) => {
-        })
-        .catch(function (error) {
-            console.error('Error sending message via HTTP:', error);
-        });
+        if (message === '' || !currentRoomName) return;
+        
+        axios.post(`${url}/group/message`, { message: message, roomName: currentRoomName }, { headers: { 'authorization': token } })
+            .then(function (response) {
+                messageInput.value = ''; // Clear input field
+                currentUserId = response.data.data.userId; 
+                socket.emit('new-message', { message, currentRoomName: currentRoomName });
+            })
+            .catch(function (error) {
+                console.error('Error sending message via HTTP:', error);
+            });
     });
 
-    // --- 3. WebSocket Listener (Called by Server Broadcast) ---
-    socket.on('chat-message', async function(object) {
+    // --- 3. WebSocket Listener ---
+    socket.on('new-message', async function (object) {
         try {
-            console.log('Message received from server via WebSocket:', object);
+            // Only render if the message belongs to the currently active room
+            if (object.currentRoomName === currentRoomName) {
+                renderMessage(object);
+            }
 
-            // Render the live message using the shared function
-            renderMessage(object); 
-            
-        } catch(e) {
+        } catch (e) {
             console.error('Error parsing WebSocket message:', e);
         }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        getmessges(); // Load history on page load
+    // --- Input Logic ---
+    function isPhoneNumber(input) {
+        const numericInput = input.replace(/[^0-9]/g, '');
+        return numericInput.length >= 7 && /^\+?[0-9\s-()]+$/.test(input);
+    }
+
+    emailInput.addEventListener('change', async function () {
+        const input = emailInput.value.trim();
+        if (!input) {
+            return
+        }
+
+        let newRoomIdentifier;
+
+        if (isPhoneNumber(input)) {
+            currentChatType = 'personal';
+            // Use the globally defined 'userIdentifier'
+            newRoomIdentifier = [input, userIdentifier].sort().join('-'); 
+            document.querySelector('header h1').textContent = `Chat with ${input}`;
+            document.querySelector('header p').textContent = `Personal Chat`;
+
+        } else {
+            currentChatType = 'group';
+            newRoomIdentifier = input;
+            document.querySelector('header h1').textContent = `Group: ${input}`;
+            document.querySelector('header p').textContent = `Group Chat`;
+        }
+        
+        currentRoomName = newRoomIdentifier;
+
+        // Add room to list and save persistence
+        if (!joinedRooms.includes(currentRoomName)) {
+            joinedRooms.push(currentRoomName);
+            saveToLocalStorage();
+        }
+
+        // Join/Switch to the new room
+        socket.emit('join-room', currentRoomName);
+
+        // Update the list and set the active room
+        renderRoomList();
+
+        // Load the messages for the newly joined room
+        await getmessges();
+
+        alert(`User joined the room ${currentRoomName}`);
+        emailInput.value = ''; // Clear input after joining
+    });
+
+    // --- Page Load Initialization ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadRoomsFromLocalStorage(); // Load rooms specific to this user
+        
+        if (joinedRooms.length > 0) {
+            const initialRoom = joinedRooms[0];
+            currentRoomName = initialRoom;
+
+            // Render all rooms first
+            renderRoomList(); 
+
+            // Join the initial room and load its history
+            socket.emit('join-room', currentRoomName);
+            await getmessges();
+
+            // Update header text to match the initial room
+            document.querySelector('header h1').textContent = `Chat: ${currentRoomName}`;
+            document.querySelector('header p').textContent = `Now Viewing`;
+        } else {
+            // Default welcome message
+            document.querySelector('header h1').textContent = `Start a Chat!`;
+            document.querySelector('header p').textContent = `Enter a name or phone number above.`;
+            mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: gray;">Welcome! Enter a group name or user phone number/ID to begin chatting.</div>';
+        }
     });
 
 </script>
+
 </html>

@@ -32,12 +32,7 @@ const server = http.createServer(app);
 //  for initializing a Socket.IO server.
 // The CORS configuration (specifically the origin setting) dictates which client 
 // domains (origins) are allowed to connect to your Socket.IO server.
-
-
 socketIo(server);
-
-
-
 db.sync()
     .then(() => {
         console.log('Database synchronized successfully.');

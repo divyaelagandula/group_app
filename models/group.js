@@ -12,6 +12,10 @@ const group=db.define('group',{
         type:DataTypes.STRING,
         allowNull:false
     },
+    roomName:{
+        type:DataTypes.STRING,
+        allowNull:false,
+    }
  
 });
 
