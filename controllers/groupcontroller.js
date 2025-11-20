@@ -47,6 +47,10 @@ const getmessages = async (req, res) => {
             message: msg.message,
             userId: msg.userId,
             username: msg.user ? msg.user.name : 'Unknown',
+            timestamp: msg.timestamp,
+            mediaUrl: msg.mediaUrl, 
+            mimeType: msg.mimeType, 
+            filename: msg.filename
         }));
 
         res.status(200).json({

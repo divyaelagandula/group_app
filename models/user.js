@@ -24,6 +24,11 @@ const signup=db.define('user',{
     password:{
         type:DataTypes.STRING,
         allowNull:false
+    },
+    joinedRooms: {
+        type: DataTypes.JSON, // Use the JSON data type
+        allowNull: true,
+        defaultValue: [],
     }
 });
 

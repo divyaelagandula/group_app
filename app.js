@@ -11,7 +11,8 @@ const indexModels = require('./models/index');
 const socketIo=require('./socket_io/socket')
 
 // Import your router/controller functions
-const groupController = require('./routes/group'); // Assuming this handles the /group routes
+const grouproutes = require('./routes/group');
+const mediaroutes=require('./routes/media') // Assuming this handles the /group routes
 const groupHandlers = require('./controllers/groupcontroller'); // Import the handlers directly
 
 const port = 3000;
@@ -21,7 +22,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'views')));
 app.use('/user', require('./routes/user'));
-app.use('/group', groupController);
+app.use('/group', grouproutes);
+app.use('/media',mediaroutes)
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));

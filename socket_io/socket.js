@@ -1,6 +1,7 @@
 const {Server} = require('socket.io');
 const socketMiddleware=require('./middileware');
 const chatHandlers=require('./hadlers/chat');
+const mediaHandler=require('./hadlers/media')
 module.exports=(server)=>{
     const io = new Server(server,
     {
@@ -15,6 +16,7 @@ module.exports=(server)=>{
         //here can have the multiple brodcasts personal-messages or group messages
     console.log('New client connected', socket.id);
     chatHandlers(io,socket);
+    mediaHandler(io,socket);
 
     
 });

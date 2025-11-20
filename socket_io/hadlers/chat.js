@@ -25,5 +25,5 @@ module.exports = (io, socket) => {
             userId: socket.user.id,
             currentRoomName: currentRoomName // <-- FIX: Added this property
         });
-    });
+    }); 
 };

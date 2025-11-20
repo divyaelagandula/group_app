@@ -4,5 +4,6 @@ user.hasMany(group);
 group.belongsTo(user);
 module.exports={
     user,
-    group
+    group,
+
 }
