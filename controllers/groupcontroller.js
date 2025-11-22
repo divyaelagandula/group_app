@@ -1,6 +1,7 @@
-const { where } = require('sequelize');
+const { where, Op } = require('sequelize');
 const groupModel = require('../models/group');
 const User = require('../models/user');
+const archiveChatData=require('../models/archivedmsgs')
 // Assuming the WebSocket server instance is passed or accessible
 // For simplicity, we'll assume the main server file imports and uses this function.
 
@@ -80,8 +81,49 @@ const checkingEmailExistsOrNot=async (req,res)=>{
     }
 
 }
+
+const ARCHIVE_BATCH_SIZE = 50; // Fetch 50 messages per scroll action
+
+
+const getArchivedMessages = async (roomName, beforeTimestamp) => {
+    // 1. Validate and convert the cursor
+    const cursorDate = new Date(beforeTimestamp);
+    if (isNaN(cursorDate.getTime())) {
+        throw new Error("Invalid timestamp format.");
+    }
+
+    // 2. Query the ArchivedChat table
+    const messages = await archiveChatData.findAll({
+        where: {
+            roomName: roomName,
+            // KEY LOGIC: Find records where the timestamp is strictly LESS THAN the cursor
+            timestamp: {
+                [Op.lt]: cursorDate 
+            }
+        },
+        limit: ARCHIVE_BATCH_SIZE,
+        // Fetch them in reverse chronological order (newest archived first)
+        // This is crucial for efficient indexed lookup, and we reverse it later.
+        order: [['timestamp', 'DESC']], 
+        
+        // Include sender details for the frontend display
+        // NOTE: You must ensure your ArchivedChat model has the correct association setup to the User model
+        include: [{
+            model: User, 
+            as: 'user',// Assuming the association alias is 'sender'
+            attributes: ['id', 'name']
+        }],
+    });
+    
+    // 3. Reverse the array to send the oldest messages first
+    // The frontend needs the list ordered from oldest (to be prepended first) to newest
+    // (to butt up against the currently displayed messages).
+    return messages.reverse();
+
+}
 module.exports = {
     message,
     getmessages,
-    checkingEmailExistsOrNot
+    checkingEmailExistsOrNot,
+    getArchivedMessages
 };

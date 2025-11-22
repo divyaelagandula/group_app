@@ -24,6 +24,22 @@ app.use(express.static(path.join(__dirname, 'views')));
 app.use('/user', require('./routes/user'));
 app.use('/group', grouproutes);
 app.use('/media',mediaroutes)
+// server.js (Your main Express application file)
+const cron = require('node-cron');
+const { runNightlyArchiving } = require('./corntabarcheivedchats'); 
+
+// ... (Your Express server setup) ...
+
+// Schedule the task to run every hour at the top of the hour (e.g., 6:00, 7:00, 8:00...)
+cron.schedule('*/5 * * * *', () => {
+    console.log(`[${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}] --- Triggering 5-Minute Archive Job ---`);
+    runNightlyArchiving(); // Call the imported function
+}, {
+    scheduled: true,
+    timezone: "Asia/Kolkata" 
+});
+
+// ... (Server starts listening) ...
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));

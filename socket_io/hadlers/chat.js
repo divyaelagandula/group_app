@@ -15,13 +15,14 @@ module.exports = (io, socket) => {
         console.log(`User ${socket.user.name} joined room: ${roomName}`);
     });
 
-    socket.on('new-message', ({ message, currentRoomName }) => {
+    socket.on('new-message', ({ message, currentRoomName,timestamp }) => {
         console.log(`Received from user: ${socket.user.name}, Room: ${currentRoomName}, Message: ${message}`);
 
         // 4. INCLUDE the room name in the payload for client-side filtering
         io.to(currentRoomName).emit('new-message', {
             username: socket.user.name,
             message: message,
+            timestamp:timestamp,
             userId: socket.user.id,
             currentRoomName: currentRoomName // <-- FIX: Added this property
         });

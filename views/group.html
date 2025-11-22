@@ -8,7 +8,7 @@
     <style>
         /* General Setup */
         body {
-            height: 80vh;
+            height: 100vh;
             /* Use flexbox to arrange children (email input and #main) in a row */
             display: flex;
             flex-direction: row;
@@ -39,7 +39,7 @@
             margin-top: 10px;
             flex-shrink: 0;
         }
-    
+
 
         /* Sidebar Styles */
         #sidebar {
@@ -167,7 +167,7 @@
             /* White/WhatsApp 'Received' color */
             align-self: flex-start;
             /* Align to the left */
-            border: 1px solid black;
+            border: 1px solid #E0E0E0;
         }
 
         /* 3. Footer/Input Area (Fixed to Bottom) */
@@ -212,8 +212,6 @@
             transform: scale(0.95);
         }
 
-        /* ... inside the <style> block ... */
-
         .media-share-button {
             background: none;
             border: none;
@@ -236,6 +234,16 @@
 
         .media-share-button:active {
             transform: scale(0.95);
+        }
+
+        /* Style for Archiving Indicators */
+        #loading-history,
+        .end-of-history {
+            text-align: center;
+            padding: 10px 0;
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -295,6 +303,10 @@
     let currentRoomName = '';
     let joinedRooms = []; // Array to keep track of all joined rooms
 
+    // 🔥 ARCHIVING CURSOR: Stores the timestamp of the oldest message loaded
+    let oldestMessageTimestamp = new Date();
+    let isLoadingHistory = false; // Flag to prevent multiple concurrent archive loads
+
     // --- DOM Elements ---
     const messageInput = document.querySelector('.message-input');
     const sendButton = document.querySelector('.send-button');
@@ -316,7 +328,7 @@
         const hasFile = selectedFile !== null;
 
         if (hasText || hasFile) {
-            sendButton.style.display = 'block'; 
+            sendButton.style.display = 'block';
         } else {
             sendButton.style.display = 'none';
         }
@@ -345,7 +357,7 @@
             sendMessage();
         }
     });
-    
+
     // --- Message Sending Logic ---
     async function sendMessage() {
         const message = messageInput.value.trim();
@@ -355,7 +367,7 @@
         if (selectedFile) {
             uploadInProgress = true;
             fileDisplay.textContent = 'Uploading...';
-          
+
             const formData = new FormData();
             formData.append('mediaFile', selectedFile);
 
@@ -374,9 +386,9 @@
                 console.error('Upload Failed:', error);
                 fileDisplay.textContent = '❌ Upload Failed!';
             } finally {
-               
+
                 setTimeout(() => {
-                    selectedFile=null
+                    selectedFile = null
                     updateSendButtonVisibility()
                     media_file_input.value = ''; // Clears the file input
                     fileDisplay.textContent = 'No file selected';
@@ -390,7 +402,8 @@
                 .then(function (response) {
                     messageInput.value = '';
                     currentUserId = response.data.data.userId;
-                    socket.emit('new-message', { message, currentRoomName: currentRoomName });
+                    timestamp=response.data.data.timestamp
+                    socket.emit('new-message', { message, currentRoomName: currentRoomName ,timestamp:timestamp});
                     updateSendButtonVisibility()
                 })
                 .catch(function (error) {
@@ -400,23 +413,23 @@
     }
 
     // --- 🔑 Database Persistence Functions ---
-    
-    function saveToDatabase(rooms) { 
+
+    function saveToDatabase(rooms) {
         const payload = { rooms: rooms };
-        axios.post(`${url}/user/saverooms`, payload, { 
-            headers: { 'authorization': token } 
+        axios.post(`${url}/user/saverooms`, payload, {
+            headers: { 'authorization': token }
         }).catch(error => {
             console.error('Error saving rooms to database:', error);
         });
     }
 
-    async function loadRoomsFromDatabase() { 
+    async function loadRoomsFromDatabase() {
         try {
-            const response = await axios.get(`${url}/user/getrooms  `, { 
-                headers: { 'authorization': token } 
+            const response = await axios.get(`${url}/user/getrooms`, {
+                headers: { 'authorization': token }
             });
             // Fallback to empty array if rooms property is missing
-            joinedRooms = response.data.rooms || []; 
+            joinedRooms = response.data.rooms || [];
         } catch (error) {
             console.error('Error loading rooms from database. Falling back to empty list:', error);
             joinedRooms = [];
@@ -425,9 +438,9 @@
     // --- End Persistence Functions ---
 
 
-    // --- UI/Chat Management Functions (Unchanged) ---
+    // --- UI/Chat Management Functions ---
     function renderRoomList() {
-        roomList.innerHTML = ''; 
+        roomList.innerHTML = '';
         joinedRooms.forEach(roomName => {
             const listItem = document.createElement('li');
             listItem.textContent = roomName;
@@ -454,6 +467,10 @@
         }
 
         currentRoomName = newRoomName;
+
+        // Reset the archive cursor for the new room
+        oldestMessageTimestamp = new Date();
+
         socket.emit('join-room', currentRoomName);
         await getmessges();
         document.querySelector('header h1').textContent = `Chat: ${currentRoomName}`;
@@ -464,95 +481,215 @@
         }
     }
 
-    function renderMessage(data) {
+    // Helper function to create a message element (for both text and media)
+    function createMessageElement(data) {
+        const messageElement = document.createElement('div');
+        const messageClass = (data.userId === currentUserId) ? 'message self-message' : 'message other-message';
+        messageElement.className = messageClass;
+
+        const dateObject = new Date(data.timestamp);
+        const readableTime = dateObject.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+
+        let contentHtml = '';
+
+        if (data.message) {
+            contentHtml = `<p>${data.username}: ${data.message}</p>`;
+        } else if (data.mediaUrl) {
+            if (data.mimeType && data.mimeType.startsWith('image/')) {
+                contentHtml = `
+                    <p class="font-bold text-sm text-indigo-600">${data.username}</p>
+                    <p class="text-xs text-gray-500 mb-1">Image shared:</p>
+                    <a href="${data.mediaUrl}" target="_blank">
+                        <img src="${data.mediaUrl}" alt="${data.filename}" style="max-width: 200px; height: auto; border-radius: 8px;">
+                    </a>
+                `;
+            } else if (data.mimeType && data.mimeType.startsWith('video/')) {
+                contentHtml = `
+                    <p class="font-bold text-sm text-indigo-600">${data.username}</p>
+                    <p class="text-xs text-gray-500 mb-1">Video shared:</p>
+                    <video controls src="${data.mediaUrl}" style="max-width: 200px; max-height: 200px; border-radius: 8px;"></video>
+                `;
+            } else {
+                contentHtml = `
+                    <p class="font-bold text-sm text-indigo-600">${data.username}</p>
+                    <p class="text-base text-indigo-700 font-semibold">
+                        📄 Shared File: <a href="${data.mediaUrl}" target="_blank" class="underline hover:text-indigo-900">${data.filename}</a>
+                    </p>
+                `;
+            }
+        }
+
+        messageElement.innerHTML = `
+            ${contentHtml}
+            <span style="display: block; font-size: 0.75rem; color: #aaa; margin-top: 5px;">${readableTime}</span>
+        `;
+
+        return messageElement;
+    }
+
+    // Renders one message and scrolls to bottom (for new messages)
+    function appendNewMessage(data) {
         if (data.currentRoomName && data.currentRoomName !== currentRoomName) {
             return;
         }
 
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message';
-        messageDiv.innerText = `${data.username}: ${data.message}`;
-
-        if (data.userId === currentUserId) {
-            messageDiv.classList.add('self-message');
-        } else {
-            messageDiv.classList.add('other-message');
-        }
-        mainContent.appendChild(messageDiv);
-        mainContent.scrollTop = mainContent.scrollHeight;
-    }
-
-    function renderMedia({ username, mediaUrl, mimeType, filename, timestamp, userId }) {
-        let contentHtml = '';
-        const messageClass = (userId === currentUserId) ? 'message self-message' : 'message other-message';
-
-        if (mimeType.startsWith('image/')) {
-            contentHtml = `
-                <p class="text-xs text-gray-500 mb-1">Image shared:</p>
-                <a href="${mediaUrl}" target="_blank">
-                    <img src="${mediaUrl}" alt="${filename}" style="max-width: 200px; height: auto; border-radius: 8px;">
-                </a>
-            `;
-        } else if (mimeType.startsWith('video/')) {
-            contentHtml = `
-                <p class="text-xs text-gray-500 mb-1">Video shared:</p>
-                <video controls src="${mediaUrl}" style="max-width: 200px; max-height: 200px; border-radius: 8px;"></video>
-            `;
-        } else {
-            contentHtml = `
-                <p class="text-base text-indigo-700 font-semibold">
-                    📄 Shared File: <a href="${mediaUrl}" target="_blank" class="underline hover:text-indigo-900">${filename}</a>
-                </p>
-           
-            `;
-        }
-        const dateObject = new Date(timestamp);
-        const readableTime = dateObject.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: true
-        });
-
-        const html = `
-            <p class="font-bold text-sm text-indigo-600">${username}</p>
-            ${contentHtml}
-            <span class="text-xs text-gray-400 mt-2 block">${readableTime}</span>
-        `;
-
-        const messageElement = document.createElement('div');
-        messageElement.className = messageClass;
-        messageElement.innerHTML = html;
+        const messageElement = createMessageElement(data);
         mainContent.appendChild(messageElement);
         mainContent.scrollTop = mainContent.scrollHeight;
     }
 
-    async function getmessges() {
-        if (!currentRoomName) {
-            mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: gray;">Start a new chat or select a room from the left.</div>';
-            return;
-        }
-        try {
-            const response = await axios.get(`${url}/group/getmessages/${currentRoomName}`, { headers: { 'authorization': token } });
-            const { messages, currentUserId: serverUserId } = response.data.data;
-            currentUserId = serverUserId;
-            mainContent.innerHTML = ''; 
-            messages.forEach(msg => {
-                if(msg.message){
-                    renderMessage(msg);
-                }
-                if(msg.mediaUrl){
-                    renderMedia(msg)
-                }
+    // --- Message Fetching (Hot Table) ---
+   // Function to load recent messages from the hot table and then check the archive
+async function getmessges() {
+    if (!currentRoomName) {
+        mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: gray;">Start a new chat or select a room from the left.</div>';
+        return;
+    }
+    
+    // Flag to track if we need to load archives immediately after hot load
+    let needsArchiveCheck = false; 
+    const HOT_TABLE_LIMIT = 6; // <--- Set this to match your server's message limit
+
+    try {
+        // 1. Fetch messages from the HOT (recent) table
+        const response = await axios.get(`${url}/group/getmessages/${currentRoomName}`, { headers: { 'authorization': token } });
+        const { messages, currentUserId: serverUserId } = response.data.data;
+        currentUserId = serverUserId;
+        mainContent.innerHTML = '';
+
+        messages.forEach(msg => {
+            const messageElement = createMessageElement(msg);
+            mainContent.appendChild(messageElement);
+        });
+
+        // 2. Determine if an immediate archive load is needed
+        if (messages.length > 0) {
+            // Update cursor based on the oldest message found
+            const oldestMsg = messages[0]; 
+            oldestMessageTimestamp = new Date(oldestMsg.timestamp);
             
-            })
-                
+            // If the hot table returned fewer messages than the limit, 
+            // it means we've reached the start of the hot table and need the archive.
+            if (messages.length < HOT_TABLE_LIMIT) { 
+                needsArchiveCheck = true;
+            }
+        } else {
+            // If the hot table is completely empty (0 messages), we definitely need to check the archive.
+            oldestMessageTimestamp = new Date(); // Reset cursor to current time
+            needsArchiveCheck = true;
+        }
+
+        // Always scroll to the bottom after the hot table load
+        mainContent.scrollTop = mainContent.scrollHeight; 
+
+    } catch (error) {
+        console.error('Error fetching recent messages:', error);
+        mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Error loading messages.</div>';
+    }
+
+    // 3. Execute the archive load if needed
+    if (needsArchiveCheck && !isLoadingHistory) {
+        isLoadingHistory = true;
+        
+        // Add loading indicator
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.id = 'loading-history';
+        loadingIndicator.textContent = 'Loading history...';
+        loadingIndicator.className = 'end-of-history';
+        mainContent.prepend(loadingIndicator);
+        
+        await loadArchivedMessages();
+        isLoadingHistory = false;
+    }
+}
+
+
+    // --- 💾 Archive Loading Logic ---
+
+    // 🔥 SCROLL LISTENER (The Trigger)
+    mainContent.addEventListener('scroll', async function () {
+        // Only run if the user is at the very top AND we aren't already loading history
+        if (mainContent.scrollTop === 0 && currentRoomName && !isLoadingHistory) {
+            // Add a small check to ensure there's enough content to scroll, or if it's truly empty
+            // This prevents a continuous loop if no archived messages exist and the scrollHeight is still minimal.
+            if (mainContent.scrollHeight > mainContent.clientHeight || mainContent.scrollHeight === mainContent.clientHeight) {
+
+                // Set flag to prevent double-loading
+                isLoadingHistory = true;
+
+                // Add loading indicator
+                if (!document.getElementById('loading-history')) {
+                    const loadingIndicator = document.createElement('div');
+                    loadingIndicator.id = 'loading-history';
+                    loadingIndicator.textContent = 'Loading history...';
+                    loadingIndicator.className = 'end-of-history'; // Reuse style
+                    mainContent.prepend(loadingIndicator);
+                }
+
+                await loadArchivedMessages();
+                isLoadingHistory = false;
+            }
+        }
+    });
+
+    // 🔥 FUNCTION TO LOAD ARCHIVED MESSAGES
+    async function loadArchivedMessages() {
+        const cursor = oldestMessageTimestamp.toISOString();
+
+        try {
+            const response = await axios.get(
+                `${url}/group/getarchivedmessages/${currentRoomName}?before_timestamp=${cursor}`,
+                { headers: { 'authorization': token } }
+            );
+
+            const messages = response.data.data.messages;
+            console.log('@@@@@@@@@@@@------------------')
+            // Remove loading indicator
+            const loadingIndicator = document.getElementById('loading-history');
+            if (loadingIndicator) loadingIndicator.remove();
+
+            if (messages.length === 0) {
+                // Display a final message if no more history exists
+                if (!document.querySelector('.end-of-history')) {
+                    mainContent.prepend(document.createElement('hr'));
+                    const endIndicator = document.createElement('div');
+                    endIndicator.textContent = 'End of Chat History';
+                    endIndicator.className = 'end-of-history';
+                    mainContent.prepend(endIndicator);
+                }
+                return;
+            }
+
+            // --- Scroll Adjustment ---
+            const oldScrollHeight = mainContent.scrollHeight;
+
+            // 2. Render the new (older) messages to the *top* of the chat area
+            messages.forEach(msg => {
+                const messageElement = createMessageElement(msg);
+                mainContent.prepend(messageElement);
+            });
+
+            // 3. Update the oldest message cursor
+            // The server should return the messages ordered chronologically (oldest first).
+            const newOldestTimestamp = messages[0].timestamp;
+            oldestMessageTimestamp = new Date(newOldestTimestamp);
+
+            // 4. Adjust scroll position to keep the user looking at the same spot
+            const newScrollHeight = mainContent.scrollHeight;
+            mainContent.scrollTop = newScrollHeight - oldScrollHeight;
+
         } catch (error) {
-            console.error('Error fetching messages:', error);
-            mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Error loading messages.</div>';
+            console.error('Error fetching archived messages:', error);
+            const loadingIndicator = document.getElementById('loading-history');
+            if (loadingIndicator) {
+                loadingIndicator.textContent = 'Error loading history.';
+                loadingIndicator.style.color = 'red';
+            }
         }
     }
 
-    // --- Input Logic (Unchanged) ---
+
+    // --- Input Logic ---
     function isPhoneNumber(input) {
         const numericInput = input.replace(/[^0-9]/g, '');
         return numericInput.length >= 7 && /^\+?[0-9\s-()]+$/.test(input);
@@ -580,11 +717,11 @@
         }
 
         currentRoomName = newRoomIdentifier;
+        oldestMessageTimestamp = new Date(); // Reset cursor for new room
 
         // Add room to list and save persistence
         if (!joinedRooms.includes(currentRoomName)) {
             joinedRooms.push(currentRoomName);
-            // 🛑 CHANGED: Save to DB
             saveToDatabase(joinedRooms);
         }
 
@@ -597,17 +734,17 @@
 
     // --- Page Load Initialization (Modified) ---
     document.addEventListener('DOMContentLoaded', async () => {
-        // 🛑 CHANGED: Load from DB
-        await loadRoomsFromDatabase(); 
+        await loadRoomsFromDatabase();
         updateSendButtonVisibility()
 
         if (joinedRooms.length > 0) {
             const initialRoom = joinedRooms[0];
             currentRoomName = initialRoom;
+            oldestMessageTimestamp = new Date(); // Initialize cursor
 
             renderRoomList();
             socket.emit('join-room', currentRoomName);
-            await getmessges();
+            await getmessges(); // Initial load sets the oldestMessageTimestamp
 
             document.querySelector('header h1').textContent = `Chat: ${currentRoomName}`;
             document.querySelector('header p').textContent = `Now Viewing`;
@@ -617,12 +754,12 @@
             mainContent.innerHTML = '<div style="padding: 20px; text-align: center; color: gray;">Welcome! Enter a group name or user phone number/ID to begin chatting.</div>';
         }
     });
-    
-    // --- WebSocket Listeners (Unchanged) ---
+
+    // --- WebSocket Listeners ---
     socket.on('new-message', async function (object) {
         try {
             if (object.currentRoomName === currentRoomName) {
-                renderMessage(object);
+                appendNewMessage(object);
             }
         } catch (e) {
             console.error('Error parsing WebSocket message:', e);
@@ -631,13 +768,12 @@
     socket.on('media', async function (object) {
         try {
             if (object.currentRoomName === currentRoomName) {
-                renderMedia(object);
+                appendNewMessage(object);
             }
         } catch (e) {
             console.error('Error parsing WebSocket message:', e);
         }
     });
-
 
 </script>
 
